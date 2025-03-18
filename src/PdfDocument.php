@@ -27,41 +27,57 @@ class PdfDocument
     }
 
     public function output()
-    {
-        $html = View::make($this->view, $this->data)->render();
-
-        $htmlFile = storage_path('app/pdf-temp.html');
-        File::put($htmlFile, $html);
-
-        if ($this->footerView) {
-            $footerHtml = View::make($this->footerView)->render();
-        } else {
-            $defaultFooterPath = __DIR__ . '/../resources/footer.html';
-            if (File::exists($defaultFooterPath)) {
-                $footerHtml = File::get($defaultFooterPath);
-            } else {
-                $footerHtml = '';
-            }
-        }
-
-        $footerFile = storage_path('app/pdf-footer-temp.html');
-        File::put($footerFile, $footerHtml);
-
-        $pdfFile = storage_path('app/' . $this->filename);
-
-        $command = "node " . base_path('vendor/leertech/tailwind-pdfgenerator/scripts/generate-pdf.cjs') . " "
-         . escapeshellarg($htmlFile) . " "
-         . escapeshellarg($pdfFile) . " "
-         . escapeshellarg($footerFile);
-
-        $output = shell_exec($command);
-        \Log::debug("PDF generation output: " . $output);
-
-
-        if ($this->download) {
-            return response()->download($pdfFile)->deleteFileAfterSend(true);
-        }
-
-        return $pdfFile;
+{
+    // Render HTML direkte til en variabel
+    $html = View::make($this->view, $this->data)->render();
+    
+    // Håndter footer som før, hvis nødvendigt – eller fjern hvis du ikke bruger den
+    if ($this->footerView) {
+        $footerHtml = View::make($this->footerView)->render();
+    } else {
+        $defaultFooterPath = __DIR__ . '/../resources/footer.html';
+        $footerHtml = File::exists($defaultFooterPath) ? File::get($defaultFooterPath) : '';
     }
+    // Hvis du ikke bruger footer, kan du fjerne footer-relateret logik.
+    
+    $pdfFile = storage_path('app/' . $this->filename);
+
+    // Byg kommandoen – her antager vi, at vi kun behøver output-filen som argument.
+    $scriptPath = base_path('vendor/leertech/tailwind-pdfgenerator/scripts/generate-pdf.cjs');
+    $npmCmd = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? 'node.exe' : 'node';
+    $command = $npmCmd . ' ' . escapeshellarg($scriptPath) . ' ' . escapeshellarg($pdfFile);
+
+    // Opsæt descriptor specification for proc_open() for at sende HTML via STDIN og modtage output
+    $descriptorspec = [
+        0 => ["pipe", "r"],  // STDIN til Node-processen
+        1 => ["pipe", "w"],  // STDOUT (vi kan fange output, hvis nødvendigt)
+        2 => ["pipe", "w"]   // STDERR
+    ];
+
+    $process = proc_open($command, $descriptorspec, $pipes, null, null);
+
+    if (is_resource($process)) {
+        // Send HTML-indholdet til Node-processen via STDIN
+        fwrite($pipes[0], $html);
+        fclose($pipes[0]);
+
+        // Få fat i output (hvis du vil logge det)
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+
+        $return_value = proc_close($process);
+        \Log::debug("Node script STDOUT: " . $stdout);
+        \Log::debug("Node script STDERR: " . $stderr);
+    }
+
+    // Tjek, om PDF-filen er oprettet
+    if ($this->download) {
+        return response()->download($pdfFile)->deleteFileAfterSend(true);
+    }
+
+    return $pdfFile;
+}
+
 }
