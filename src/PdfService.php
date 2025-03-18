@@ -1,6 +1,6 @@
 <?php
 
-namespace LeerTech\Tailwind;
+namespace LeerTech\Tailwind\PdfGenerator;
 
 class PdfService
 {
