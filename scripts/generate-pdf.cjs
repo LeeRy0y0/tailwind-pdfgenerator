@@ -8,7 +8,7 @@ try {
   try {
     // Kør npm install puppeteer i den aktuelle mappe
     execSync('npm install puppeteer', { stdio: 'inherit' });
-    // Prøv igen at kræve puppeteer
+
     puppeteer = require('puppeteer');
   } catch (installErr) {
     console.error("Kunne ikke installere Puppeteer automatisk:", installErr);
