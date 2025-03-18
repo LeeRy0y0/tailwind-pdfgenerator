@@ -26,10 +26,14 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install puppeteer --no-save"
+      "php artisan clear-compiled",
+      "php artisan optimize",
+      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install --production",
     ],
     "post-update-cmd": [
-      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install puppeteer --no-save"
+      "php artisan clear-compiled",
+      "php artisan optimize",
+      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install",
     ]
   }
 }
