@@ -49,7 +49,7 @@ class PdfDocument
 
         $pdfFile = storage_path('app/' . $this->filename);
 
-        $command = "node " . base_path('packages/LeerTech/Tailwind/scripts/generate-pdf.cjs') . " "
+        $command = "node " . base_path('vendor/leertech/scripts/generate-pdf.cjs') . " "
                  . escapeshellarg($htmlFile) . " "
                  . escapeshellarg($pdfFile) . " "
                  . escapeshellarg($footerFile);
