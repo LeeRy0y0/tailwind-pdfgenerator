@@ -30,12 +30,18 @@ class PdfDocument
     {
         $scriptDir = base_path('vendor/leertech/tailwind-pdfgenerator/scripts');
         $puppeteerDir = $scriptDir . DIRECTORY_SEPARATOR . 'node_modules' . DIRECTORY_SEPARATOR . 'puppeteer';
-    
-        if (!file_exists($puppeteerDir)) {
-            // Installer Puppeteer én gang — uden at opdatere package.json
-            shell_exec("cd " . escapeshellarg($scriptDir) . " && npm install puppeteer --no-save 2>&1");
-        }
         
+        // Tjek om puppeteer allerede er installeret
+        if (!file_exists($puppeteerDir)) {
+            // Brug npm.cmd på Windows, ellers npm
+            $npmCmd = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? 'npm.cmd' : 'npm';
+            $command = "cd " . escapeshellarg($scriptDir) . " && {$npmCmd} install puppeteer --no-save 2>&1";
+            
+            // Log output for debugging
+            $output = shell_exec($command);
+            \Log::debug("npm install puppeteer output: " . $output);
+        }
+
         $html = View::make($this->view, $this->data)->render();
 
         $htmlFile = storage_path('app/pdf-temp.html');
