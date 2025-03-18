@@ -9,6 +9,7 @@ try {
   try {
     // Kør npm install puppeteer i scriptets mappe
     execSync('npm install puppeteer', { cwd: __dirname, stdio: 'inherit' });
+
     // Prøv at kræve Puppeteer igen
     puppeteer = require('puppeteer');
   } catch (installErr) {
