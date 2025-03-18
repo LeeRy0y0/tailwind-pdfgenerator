@@ -11,7 +11,6 @@ const puppeteer = require('puppeteer');
         process.exit(1);
     }
 
-    // Læs HTML og footer direkte fra fil
     const fs = require("fs");
     const html = fs.readFileSync(htmlPath, "utf8");
     
@@ -27,17 +26,14 @@ const puppeteer = require('puppeteer');
         `;
     }
 
-    // Start Puppeteer med optimerede argumenter
     const browser = await puppeteer.launch({
         headless: "new",
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const page = await browser.newPage();
     
-    // Sæt HTML direkte (uden at skrive til disk)
     await page.setContent(html, { waitUntil: "networkidle0" });
     
-    // Generer PDF direkte
     await page.pdf({
          path: pdfPath,
          format: "A4",
