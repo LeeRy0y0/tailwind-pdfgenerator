@@ -50,11 +50,13 @@ class PdfDocument
         $pdfFile = storage_path('app/' . $this->filename);
 
         $command = "node " . base_path('vendor/leertech/scripts/generate-pdf.cjs') . " "
-                 . escapeshellarg($htmlFile) . " "
-                 . escapeshellarg($pdfFile) . " "
-                 . escapeshellarg($footerFile);
+        . escapeshellarg($htmlFile) . " "
+        . escapeshellarg($pdfFile) . " "
+        . escapeshellarg($footerFile) . " 2>&1";  // Append 2>&1 to capture errors
 
-        shell_exec($command);
+        $output = shell_exec($command);
+        \Log::debug("PDF generation output: " . $output);
+
 
         if ($this->download) {
             return response()->download($pdfFile)->deleteFileAfterSend(true);
