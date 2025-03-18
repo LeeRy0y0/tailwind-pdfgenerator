@@ -1,22 +1,28 @@
+#!/usr/bin/env node
+
 const puppeteer = require('puppeteer');
+const fs = require('fs');
 
 (async () => {
     const args = process.argv.slice(2);
-    let htmlPath = args[0];
-    let pdfPath = args[1];
-    let footerTemplatePath = args[2];
+    let pdfPath = args[0]; 
+    let footerTemplatePath = args[1]; // Valgfrit
 
-    if (!htmlPath || !pdfPath) {
-        console.error("Usage: node generate-pdf.cjs <htmlPath> <pdfPath> [footerTemplate]");
+    if (!pdfPath) {
+        console.error("Usage: node generate-pdf.cjs <pdfPath> [footerTemplatePath]");
         process.exit(1);
     }
 
-    const fs = require("fs");
-    const html = fs.readFileSync(htmlPath, "utf8");
-    
+    // Læs HTML-indholdet fra STDIN
+    let html = '';
+    process.stdin.setEncoding('utf8');
+    for await (const chunk of process.stdin) {
+        html += chunk;
+    }
+
     let footerTemplate = '';
     if (footerTemplatePath && fs.existsSync(footerTemplatePath)) {
-        footerTemplate = fs.readFileSync(footerTemplatePath, "utf8");
+        footerTemplate = fs.readFileSync(footerTemplatePath, 'utf8');
     }
     if (!footerTemplate) {
         footerTemplate = `
@@ -50,4 +56,5 @@ const puppeteer = require('puppeteer');
     });
 
     await browser.close();
+    process.exit(0);
 })();
