@@ -49,10 +49,10 @@ class PdfDocument
 
         $pdfFile = storage_path('app/' . $this->filename);
 
-        $command = "node " . base_path('vendor/leertech/scripts/generate-pdf.cjs') . " "
-        . escapeshellarg($htmlFile) . " "
-        . escapeshellarg($pdfFile) . " "
-        . escapeshellarg($footerFile) . " 2>&1";  // Append 2>&1 to capture errors
+        $command = "node " . base_path('vendor/leertech/tailwind-pdfgenerator/scripts/generate-pdf.cjs') . " "
+         . escapeshellarg($htmlFile) . " "
+         . escapeshellarg($pdfFile) . " "
+         . escapeshellarg($footerFile);
 
         $output = shell_exec($command);
         \Log::debug("PDF generation output: " . $output);
