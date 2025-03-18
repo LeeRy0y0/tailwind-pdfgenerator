@@ -1,4 +1,5 @@
 const { execSync } = require('child_process');
+const path = require('path');
 
 let puppeteer;
 try {
@@ -6,9 +7,9 @@ try {
 } catch (err) {
   console.log("Puppeteer er ikke installeret. Installerer nu...");
   try {
-    // Kør npm install puppeteer i den aktuelle mappe
-    execSync('npm install puppeteer', { stdio: 'inherit' });
-
+    // Kør npm install puppeteer i scriptets mappe
+    execSync('npm install puppeteer', { cwd: __dirname, stdio: 'inherit' });
+    // Prøv at kræve Puppeteer igen
     puppeteer = require('puppeteer');
   } catch (installErr) {
     console.error("Kunne ikke installere Puppeteer automatisk:", installErr);
