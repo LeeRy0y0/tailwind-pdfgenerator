@@ -1,27 +1,35 @@
 {
-    "name": "leertech/tailwind-pdfgenerator",
-    "description": "En Laravel package til at generere PDF'er med Tailwind CSS",
-    "type": "library",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Dit Navn",
-            "email": "din.email@example.com"
-        }
-    ],
-    "autoload": {
-        "psr-4": {
-            "LeerTech\\Tailwind\\PdfGenerator\\": "src/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "LeerTech\\Tailwind\\PdfGenerator\\PdfGeneratorServiceProvider"
-            ],
-            "aliases": {
-                "PdfGenerator": "LeerTech\\Tailwind\\PdfGenerator\\Facades\\PdfGenerator"
-            }
-        }
+  "name": "leertech/tailwind-pdfgenerator",
+  "description": "En Laravel package til at generere PDF'er med Tailwind CSS",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dit Navn",
+      "email": "din.email@example.com"
     }
+  ],
+  "autoload": {
+    "psr-4": {
+      "LeerTech\\Tailwind\\PdfGenerator\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "LeerTech\\Tailwind\\PdfGenerator\\PdfGeneratorServiceProvider"
+      ],
+      "aliases": {
+        "PdfGenerator": "LeerTech\\Tailwind\\PdfGenerator\\Facades\\PdfGenerator"
+      }
+    }
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install puppeteer --no-save"
+    ],
+    "post-update-cmd": [
+      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install puppeteer --no-save"
+    ]
+  }
 }
