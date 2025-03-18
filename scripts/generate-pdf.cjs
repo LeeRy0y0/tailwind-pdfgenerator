@@ -1,19 +1,16 @@
-#!/usr/bin/env node
-
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
 (async () => {
     const args = process.argv.slice(2);
     let pdfPath = args[0]; 
-    let footerTemplatePath = args[1]; // Valgfrit
+    let footerTemplatePath = args[1];
 
     if (!pdfPath) {
         console.error("Usage: node generate-pdf.cjs <pdfPath> [footerTemplatePath]");
         process.exit(1);
     }
 
-    // Læs HTML-indholdet fra STDIN
     let html = '';
     process.stdin.setEncoding('utf8');
     for await (const chunk of process.stdin) {
