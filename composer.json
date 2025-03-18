@@ -28,12 +28,12 @@
     "post-install-cmd": [
       "php artisan clear-compiled",
       "php artisan optimize",
-      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install --production",
+      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install --production"
     ],
     "post-update-cmd": [
       "php artisan clear-compiled",
       "php artisan optimize",
-      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install",
+      "cd vendor/leertech/tailwind-pdfgenerator/scripts && npm install"
     ]
   }
 }
