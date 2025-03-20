@@ -31,7 +31,7 @@ const fs = require('fs');
 
     const browser = await puppeteer.launch({
         headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--mute-audio']
     });
     const page = await browser.newPage();
     
