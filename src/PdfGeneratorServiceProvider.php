@@ -12,7 +12,7 @@ class PdfGeneratorServiceProvider extends ServiceProvider
             __DIR__.'/../config/pdf-generator.php' => config_path('pdf-generator.php'),
         ], 'config');
 
-        if (app()->environment('local')) {
+
             $scriptDir = base_path('vendor/leertech/tailwind-pdfgenerator/scripts');
             $packageJsonPath = $scriptDir . DIRECTORY_SEPARATOR . 'package.json';
             if (!file_exists($packageJsonPath)) {
@@ -30,7 +30,7 @@ class PdfGeneratorServiceProvider extends ServiceProvider
                 $output = shell_exec($command);
                 \Log::debug("NPM install output: " . $output);
             }
-        }
+        
     }
 
     public function register()
