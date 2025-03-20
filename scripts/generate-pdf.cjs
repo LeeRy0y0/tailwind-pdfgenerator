@@ -31,13 +31,13 @@ const fs = require('fs');
     if (footerTemplatePath && fs.existsSync(footerTemplatePath)) {
         footerTemplate = fs.readFileSync(footerTemplatePath, 'utf8');
     }
-    if (!footerTemplate) {
+    /*if (!footerTemplate) {
         footerTemplate = `
             <div style="font-size:10px; width:100%; text-align:center; border-top:1px solid #ddd; padding-top:5px;">
                 Side <span class="pageNumber"></span> af <span class="totalPages"></span>
             </div>
         `;
-    }
+    }*/
 
     // Use provided options or fallback defaults
     const pdfFormat = options.format || "A4";
