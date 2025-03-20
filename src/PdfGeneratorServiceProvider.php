@@ -23,7 +23,7 @@ class PdfGeneratorServiceProvider extends ServiceProvider
                     "dependencies" => new \stdClass()
                 ]));
             }
-            $puppeteerDir = $scriptDir . DIRECTORY_SEPARATOR . 'node_modules' . DIRECTORY_SEPARATOR . 'puppeteer';
+            $puppeteerDir = $scriptDir . DIRECTORY_SEPARATOR . 'node_modules' . DIRECTORY_SEPARATOR . 'playwright';
             if (!file_exists($puppeteerDir)) {
                 $npmCmd = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? 'npm.cmd' : 'npm';
                 $command = "cd " . escapeshellarg($scriptDir) . " && {$npmCmd} install puppeteer --no-save 2>&1";
