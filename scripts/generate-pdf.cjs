@@ -28,8 +28,13 @@ const fs = require('fs');
     }
 
     let footerTemplate = '';
+    let showFooter = false;
+    
     if (footerTemplatePath && fs.existsSync(footerTemplatePath)) {
-        footerTemplate = fs.readFileSync(footerTemplatePath, 'utf8');
+        footerTemplate = fs.readFileSync(footerTemplatePath, 'utf8').trim();
+        if (footerTemplate.length > 0) {
+            showFooter = true;
+        }
     }
     /*if (!footerTemplate) {
         footerTemplate = `
@@ -67,9 +72,9 @@ const fs = require('fs');
          format: pdfFormat,
          landscape: landscape,
          printBackground: true,
-         displayHeaderFooter: true,
+         displayHeaderFooter: showFooter,
          headerTemplate: `<div></div>`,
-         footerTemplate: footerTemplate,
+         footerTemplate: showFooter ? footerTemplate : undefined,
          margin: margin
     });
 
