@@ -117,4 +117,16 @@ class PdfDocument
 
         return $pdfFile;
     }
+
+    public function saveToTemp(): string
+    {
+        $filename = $this->filename ?? \Illuminate\Support\Str::random(16) . '.pdf';
+        $path = 'temp/' . $filename;
+
+        // Gem PDF som fil
+        \Illuminate\Support\Facades\Storage::disk('local')->put($path, $this->output());
+
+        // Returnér route til download (uden auto-download)
+        return route('pdf.download.temp', ['filename' => $filename]);
+    }
 }
