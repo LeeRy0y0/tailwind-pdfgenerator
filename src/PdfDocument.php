@@ -43,12 +43,12 @@ class PdfDocument
         return $this;
     }
 
-    public function output()
+    public function render(): string
     {
         $html = View::make($this->view, $this->data)->render();
         $pdfFile = storage_path('app/' . $this->filename);
 
-        // Prepare footer template file if needed
+        // Prepare footer
         $footerTemplatePath = '';
         if ($this->footerView) {
             $footerHtml = View::make($this->footerView, $this->data)->render();
@@ -59,7 +59,6 @@ class PdfDocument
         $script = base_path('vendor/leertech/tailwind-pdfgenerator/scripts/generate-pdf.cjs');
         $node   = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? 'node.exe' : 'node';
 
-        // Build options array to pass to the Node script
         $options = [
             'format'    => $this->format,
             'landscape' => $this->landscape,
@@ -72,20 +71,14 @@ class PdfDocument
         ];
         $optionsJson = escapeshellarg(json_encode($options));
 
-        // Build the command line. Pass pdfFile, then footer template path (if available), then the options JSON.
         $cmd = escapeshellcmd("$node $script " . escapeshellarg($pdfFile));
-        if ($footerTemplatePath) {
-            $cmd .= ' ' . escapeshellarg($footerTemplatePath);
-        } else {
-            // Pass an empty string so that the Node script's logic falls back to its default footer.
-            $cmd .= ' ' . escapeshellarg('');
-        }
+        $cmd .= ' ' . escapeshellarg($footerTemplatePath ?: '');
         $cmd .= ' ' . $optionsJson;
 
         $descriptors = [
-            0 => ['pipe', 'r'],  // STDIN
-            1 => ['pipe', 'w'],  // STDOUT
-            2 => ['pipe', 'w'],  // STDERR
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
         ];
 
         $process = proc_open($cmd, $descriptors, $pipes);
@@ -111,22 +104,29 @@ class PdfDocument
             throw new \RuntimeException("PDF generation mislykkedes: $stderr");
         }
 
+        return $pdfFile;
+    }
+
+
+    public function output()
+    {
+        $pdfFile = $this->render();
+
         if ($this->download) {
             return response()->download($pdfFile)->deleteFileAfterSend(true);
         }
 
-        return $pdfFile;
+        return file_get_contents($pdfFile); // Bruges fx i Storage::put(...)
     }
 
     public function saveToTemp(): string
     {
         $filename = $this->filename ?? \Illuminate\Support\Str::random(16) . '.pdf';
         $path = 'temp/' . $filename;
-
-        // Gem PDF som fil
-        \Illuminate\Support\Facades\Storage::disk('local')->put($path, $this->output());
-
-        // Returnér route til download (uden auto-download)
+    
+        $pdfContent = $this->output(); // HUSK: Den returnerer nu en string hvis `$download = false`
+        \Illuminate\Support\Facades\Storage::disk('local')->put($path, $pdfContent);
+    
         return route('pdf.download.temp', ['filename' => $filename]);
     }
 }
