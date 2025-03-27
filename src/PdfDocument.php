@@ -124,9 +124,10 @@ class PdfDocument
         $filename = $this->filename ?? \Illuminate\Support\Str::random(16) . '.pdf';
         $path = 'temp/' . $filename;
     
-        $pdfContent = $this->output(); // HUSK: Den returnerer nu en string hvis `$download = false`
-        \Illuminate\Support\Facades\Storage::disk('local')->put($path, $pdfContent);
+        // Gem PDF som raw content
+        \Illuminate\Support\Facades\Storage::disk('public')->put($path, $this->output());
     
-        return route('pdf.download.temp', ['filename' => $filename]);
-    }
+        // Returnér direkte URL
+        return \Storage::disk('public')->url($path);
+    }    
 }
