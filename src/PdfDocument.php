@@ -121,11 +121,14 @@ class PdfDocument
 
     public function saveToTemp(): string
     {
+        // Generér HTML fra Blade-view
         $html = View::make($this->view, $this->data)->render();
-        $filename = $this->filename ?? \Illuminate\Support\Str::random(16) . '.pdf';
-        $pdfTempPath = storage_path('app/temp/' . $filename); // midlertidigt sted
+        $filename = $this->filename ?? Str::random(16) . '.pdf';
     
-        // Prepare footer
+        // Midlertidig PDF-sti (gemmes først her)
+        $pdfTempPath = storage_path('app/temp/' . $filename);
+    
+        // Generér footer hvis der er angivet et view
         $footerTemplatePath = '';
         if ($this->footerView) {
             $footerHtml = View::make($this->footerView, $this->data)->render();
@@ -133,29 +136,36 @@ class PdfDocument
             file_put_contents($footerTemplatePath, $footerHtml);
         }
     
+        // Node.js script og konfiguration
         $script = base_path('vendor/leertech/tailwind-pdfgenerator/scripts/generate-pdf.cjs');
-        $node   = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? 'node.exe' : 'node';
+        $node   = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'node.exe' : 'node';
     
         $options = [
-            'format'    => $this->format,
-            'landscape' => $this->landscape,
+            'format'    => $this->format ?? 'A4',
+            'landscape' => $this->landscape ?? false,
             'margin'    => [
-                'top'    => "10mm",
-                'bottom' => "20mm",
-                'left'   => "10mm",
-                'right'  => "10mm"
+                'top'    => '10mm',
+                'bottom' => '20mm',
+                'left'   => '10mm',
+                'right'  => '10mm',
             ]
         ];
-        $optionsJson = escapeshellarg(json_encode($options));
     
-        $cmd = escapeshellcmd("$node $script " . escapeshellarg($pdfTempPath));
-        $cmd .= ' ' . escapeshellarg($footerTemplatePath ?: '');
-        $cmd .= ' ' . $optionsJson;
+        // Escape hvert argument korrekt
+        $escapedNode     = escapeshellcmd($node);
+        $escapedScript   = escapeshellarg($script);
+        $escapedPdfPath  = escapeshellarg($pdfTempPath);
+        $escapedFooter   = escapeshellarg($footerTemplatePath ?: '');
+        $escapedOptions  = escapeshellarg(json_encode($options));
     
+        // Kommando til at køre Node-scriptet
+        $cmd = "$escapedNode $escapedScript $escapedPdfPath $escapedFooter $escapedOptions";
+    
+        // Set up process
         $descriptors = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            0 => ['pipe', 'r'], // stdin
+            1 => ['pipe', 'w'], // stdout
+            2 => ['pipe', 'w'], // stderr
         ];
     
         $process = proc_open($cmd, $descriptors, $pipes);
@@ -164,36 +174,39 @@ class PdfDocument
             throw new \RuntimeException('Kunne ikke starte Node-processen');
         }
     
+        // Skriv HTML til stdin
         fwrite($pipes[0], $html);
         fclose($pipes[0]);
     
+        // Læs fejloutput (hvis der er nogen)
         $stderr = stream_get_contents($pipes[2]);
         fclose($pipes[2]);
     
-        $return = proc_close($process);
+        $exitCode = proc_close($process);
     
+        // Ryd op
         if ($footerTemplatePath && file_exists($footerTemplatePath)) {
             unlink($footerTemplatePath);
         }
     
-        if ($return !== 0) {
+        if ($exitCode !== 0) {
             \Log::error("PDF generation fejl: $stderr");
             throw new \RuntimeException("PDF generation mislykkedes: $stderr");
         }
     
-        // 🔁 Flyt filen til public/temp og returnér URL
+        // Flyt PDF til public/temp
         $relativePath = 'temp/' . $filename;
-        $finalStoragePath = storage_path('app/public/' . $relativePath);
+        $finalPath = storage_path('app/public/' . $relativePath);
     
-        // Sørg for mappe findes
-        if (!file_exists(dirname($finalStoragePath))) {
-            mkdir(dirname($finalStoragePath), 0755, true);
+        if (!file_exists(dirname($finalPath))) {
+            mkdir(dirname($finalPath), 0755, true);
         }
     
-        copy($pdfTempPath, $finalStoragePath);
-        unlink($pdfTempPath); // oprydning
+        copy($pdfTempPath, $finalPath);
+        unlink($pdfTempPath); // ryd op
     
-        return \Storage::disk('public')->url($relativePath);
+        return Storage::disk('public')->url($relativePath);
     }
+    
     
 }
