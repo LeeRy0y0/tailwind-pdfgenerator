@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const path = require('path');
 
 (async () => {
     const args = process.argv.slice(2);
@@ -8,14 +9,6 @@ const fs = require('fs');
     let options = {};
 
     // If a third argument is passed, parse it as JSON
-    if (args[2]) {
-        try {
-            options = JSON.parse(args[2]);
-        } catch (e) {
-            console.error("Error parsing options:", e);
-        }
-    }
-
     const dir = path.dirname(pdfPath);
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
@@ -25,6 +18,14 @@ const fs = require('fs');
     process.stdin.setEncoding('utf8');
     for await (const chunk of process.stdin) {
         html += chunk;
+    }
+
+    if (args[2]) {
+        try {
+            options = JSON.parse(args[2]);
+        } catch (e) {
+            console.error("Error parsing options:", e);
+        }
     }
 
     let footerTemplate = '';
