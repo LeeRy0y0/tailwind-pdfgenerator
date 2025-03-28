@@ -16,9 +16,9 @@ const fs = require('fs');
         }
     }
 
-    if (!pdfPath) {
-        console.error("Usage: node generate-pdf.cjs <pdfPath> [footerTemplatePath] [options]");
-        process.exit(1);
+    const dir = path.dirname(pdfPath);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
     }
 
     let html = '';

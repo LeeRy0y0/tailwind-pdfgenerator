@@ -124,14 +124,19 @@ class PdfDocument
 
     public function saveToTemp(): string
     {
-        // 1. Render HTML fra view
+        // 1. Render Blade HTML
         $html = View::make($this->view, $this->data)->render();
         $filename = $this->filename ?? Str::random(16) . '.pdf';
     
-        // 2. Midlertidig PDF-sti (før den flyttes til public)
+        // 2. Midlertidig filsti til PDF
         $pdfTempPath = storage_path('app/temp/' . $filename);
     
-        // 3. Footer håndtering
+        // 3. Sørg for at mappen eksisterer
+        if (!file_exists(dirname($pdfTempPath))) {
+            mkdir(dirname($pdfTempPath), 0755, true);
+        }
+    
+        // 4. Footer håndtering
         $footerTemplatePath = '';
         if ($this->footerView) {
             $footerHtml = View::make($this->footerView, $this->data)->render();
@@ -139,7 +144,7 @@ class PdfDocument
             file_put_contents($footerTemplatePath, $footerHtml);
         }
     
-        // 4. Node.js script og options
+        // 5. Node script og config
         $scriptPath = base_path('vendor/leertech/tailwind-pdfgenerator/scripts/generate-pdf.cjs');
         $nodeBinary = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'node.exe' : 'node';
     
@@ -154,7 +159,7 @@ class PdfDocument
             ],
         ];
     
-        // 5. Brug Symfony Process
+        // 6. Kør Node-script med Symfony Process
         $process = new Process([
             $nodeBinary,
             $scriptPath,
@@ -166,18 +171,18 @@ class PdfDocument
         $process->setInput($html);
         $process->run();
     
-        // 6. Oprydning af footer
+        // 7. Ryd op i footer
         if ($footerTemplatePath && file_exists($footerTemplatePath)) {
             unlink($footerTemplatePath);
         }
     
-        // 7. Fejl hvis processen fejlede
+        // 8. Fejlhåndtering
         if (!$process->isSuccessful()) {
             \Log::error("PDF generation fejl: " . $process->getErrorOutput());
             throw new \RuntimeException("PDF generation mislykkedes: " . $process->getErrorOutput());
         }
     
-        // 8. Gem i public-disk (f.eks. /storage/temp/xyz.pdf)
+        // 9. Flyt til public disk
         $relativePath = 'temp/' . $filename;
         $publicPath = storage_path('app/public/' . $relativePath);
     
@@ -188,8 +193,7 @@ class PdfDocument
         copy($pdfTempPath, $publicPath);
         unlink($pdfTempPath);
     
-        // 9. Returnér offentlig URL
+        // 10. Returnér offentlig URL
         return Storage::disk('public')->url($relativePath);
     }
-    
 }
