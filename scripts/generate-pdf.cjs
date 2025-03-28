@@ -8,7 +8,6 @@ const path = require('path');
     let footerTemplatePath = args[1];
     let options = {};
 
-    // If a third argument is passed, parse it as JSON
     const dir = path.dirname(pdfPath);
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
@@ -45,7 +44,6 @@ const path = require('path');
         `;
     }*/
 
-    // Use provided options or fallback defaults
     const pdfFormat = options.format || "A4";
     const landscape = options.landscape || false;
     const margin = options.margin || {
