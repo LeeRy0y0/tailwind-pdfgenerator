@@ -2,6 +2,9 @@
 
 namespace LeerTech\Tailwind\PdfGenerator;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\Process\Process;
 
 class PdfDocument
 {
@@ -121,14 +124,14 @@ class PdfDocument
 
     public function saveToTemp(): string
     {
-        // Generér HTML fra Blade-view
+        // 1. Render HTML fra view
         $html = View::make($this->view, $this->data)->render();
         $filename = $this->filename ?? Str::random(16) . '.pdf';
     
-        // Midlertidig PDF-sti (gemmes først her)
+        // 2. Midlertidig PDF-sti (før den flyttes til public)
         $pdfTempPath = storage_path('app/temp/' . $filename);
     
-        // Generér footer hvis der er angivet et view
+        // 3. Footer håndtering
         $footerTemplatePath = '';
         if ($this->footerView) {
             $footerHtml = View::make($this->footerView, $this->data)->render();
@@ -136,9 +139,9 @@ class PdfDocument
             file_put_contents($footerTemplatePath, $footerHtml);
         }
     
-        // Node.js script og konfiguration
-        $script = base_path('vendor/leertech/tailwind-pdfgenerator/scripts/generate-pdf.cjs');
-        $node   = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'node.exe' : 'node';
+        // 4. Node.js script og options
+        $scriptPath = base_path('vendor/leertech/tailwind-pdfgenerator/scripts/generate-pdf.cjs');
+        $nodeBinary = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'node.exe' : 'node';
     
         $options = [
             'format'    => $this->format ?? 'A4',
@@ -148,65 +151,45 @@ class PdfDocument
                 'bottom' => '20mm',
                 'left'   => '10mm',
                 'right'  => '10mm',
-            ]
+            ],
         ];
     
-        // Escape hvert argument korrekt
-        $escapedNode     = escapeshellcmd($node);
-        $escapedScript   = escapeshellarg($script);
-        $escapedPdfPath  = escapeshellarg($pdfTempPath);
-        $escapedFooter   = escapeshellarg($footerTemplatePath ?: '');
-        $escapedOptions  = escapeshellarg(json_encode($options));
+        // 5. Brug Symfony Process
+        $process = new Process([
+            $nodeBinary,
+            $scriptPath,
+            $pdfTempPath,
+            $footerTemplatePath ?: '',
+            json_encode($options),
+        ]);
     
-        // Kommando til at køre Node-scriptet
-        $cmd = "$escapedNode $escapedScript $escapedPdfPath $escapedFooter $escapedOptions";
+        $process->setInput($html);
+        $process->run();
     
-        // Set up process
-        $descriptors = [
-            0 => ['pipe', 'r'], // stdin
-            1 => ['pipe', 'w'], // stdout
-            2 => ['pipe', 'w'], // stderr
-        ];
-    
-        $process = proc_open($cmd, $descriptors, $pipes);
-    
-        if (!is_resource($process)) {
-            throw new \RuntimeException('Kunne ikke starte Node-processen');
-        }
-    
-        // Skriv HTML til stdin
-        fwrite($pipes[0], $html);
-        fclose($pipes[0]);
-    
-        // Læs fejloutput (hvis der er nogen)
-        $stderr = stream_get_contents($pipes[2]);
-        fclose($pipes[2]);
-    
-        $exitCode = proc_close($process);
-    
-        // Ryd op
+        // 6. Oprydning af footer
         if ($footerTemplatePath && file_exists($footerTemplatePath)) {
             unlink($footerTemplatePath);
         }
     
-        if ($exitCode !== 0) {
-            \Log::error("PDF generation fejl: $stderr");
-            throw new \RuntimeException("PDF generation mislykkedes: $stderr");
+        // 7. Fejl hvis processen fejlede
+        if (!$process->isSuccessful()) {
+            \Log::error("PDF generation fejl: " . $process->getErrorOutput());
+            throw new \RuntimeException("PDF generation mislykkedes: " . $process->getErrorOutput());
         }
     
-        // Flyt PDF til public/temp
+        // 8. Gem i public-disk (f.eks. /storage/temp/xyz.pdf)
         $relativePath = 'temp/' . $filename;
-        $finalPath = storage_path('app/public/' . $relativePath);
+        $publicPath = storage_path('app/public/' . $relativePath);
     
-        if (!file_exists(dirname($finalPath))) {
-            mkdir(dirname($finalPath), 0755, true);
+        if (!file_exists(dirname($publicPath))) {
+            mkdir(dirname($publicPath), 0755, true);
         }
     
-        copy($pdfTempPath, $finalPath);
-        unlink($pdfTempPath); // ryd op
+        copy($pdfTempPath, $publicPath);
+        unlink($pdfTempPath);
     
+        // 9. Returnér offentlig URL
         return Storage::disk('public')->url($relativePath);
     }
-    
     
 }
